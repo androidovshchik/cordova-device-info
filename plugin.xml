@@ -1,26 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?><!--suppress XmlUnboundNsPrefix -->
-<plugin id="cordova-detect-vpn" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0">
-    <name>cordova-detect-vpn</name>
+<plugin id="cordova-device-info" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0">
+    <name>cordova-device-info</name>
     <author>Vlad Kalyuzhnyu</author>
-    <description>Simple plugin that allows to detect VPN connection on device</description>
-    <keywords>cordova,plugin,android,detect,vpn</keywords>
-    <repo>https://github.com/androidovshchik/cordova-detect-vpn.git</repo>
-    <issue>https://github.com/androidovshchik/cordova-detect-vpn/issues</issue>
+    <description>Simple plugin that provides info about Android device</description>
+    <keywords>cordova,plugin,android,device,info</keywords>
+    <repo>https://github.com/androidovshchik/cordova-device-info.git</repo>
+    <issue>https://github.com/androidovshchik/cordova-device-info/issues</issue>
 
-    <js-module name="DetectVPN" src="www/detect-vpn.js">
-        <clobbers target="DetectVPN" />
+    <js-module name="DeviceInfo" src="www/device-info.js">
+        <clobbers target="DeviceInfo" />
     </js-module>
 
     <platform name="android">
         <config-file parent="/*" target="res/xml/config.xml">
-            <feature name="DetectVPNPlugin">
-                <param name="android-package" value="ru.androidovshchik.DetectVPNPlugin" />
+            <feature name="DeviceInfoPlugin">
+                <param name="android-package" value="ru.androidovshchik.DeviceInfoPlugin" />
             </feature>
         </config-file>
-        <config-file parent="/manifest" target="AndroidManifest.xml">
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-        </config-file>
-        <source-file src="src/android/ru/androidovshchik/DetectVPNPlugin.java"
+        <source-file src="src/android/ru/androidovshchik/DeviceInfoPlugin.java"
             target-dir="src/ru/androidovshchik" />
     </platform>
 

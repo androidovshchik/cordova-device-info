@@ -1,6 +1,6 @@
-# cordova-detect-vpn plugin
+# cordova-device-info plugin
 
-Simple plugin that allows to detect VPN connection on device
+Simple plugin that provides info about Android device
 
 ## Getting started
 
@@ -11,15 +11,14 @@ Create a new Cordova Project
 Install the plugin
 
     $ cd example
-    $ cordova plugin add https://github.com/androidovshchik/cordova-detect-vpn.git
+    $ cordova plugin add https://github.com/androidovshchik/cordova-device-info.git
     
 
 Edit `www/js/index.js` and add the following code inside `onDeviceReady`
 
 ```js
-DetectVPN.isEnabled(function(result) {
+DeviceInfo.(function(result) {
     if (result) {
-        // there was found VPN connection
     }
 });
 ```

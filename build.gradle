@@ -21,4 +21,5 @@ repositories {
 dependencies {
     compileOnly fileTree(dir: "libs", include: ["*.jar"])
     compileOnly "org.apache.cordova:framework:8.1.0"
+    compileOnly "com.github.nisrulz:easydeviceinfo-base:2.4.1"
 }

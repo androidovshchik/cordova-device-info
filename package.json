@@ -1,27 +1,27 @@
 {
-  "name": "cordova-detect-vpn",
+  "name": "cordova-device-info",
   "version": "1.0.0",
   "author": "Vlad Kalyuzhnyu",
-  "description": "Simple plugin that allows to detect VPN connection on device",
+  "description": "Simple plugin that provides info about Android device",
   "cordova": {
-    "id": "cordova-detect-vpn",
+    "id": "cordova-device-info",
     "platforms": [
       "android"
     ]
   },
-  "homepage": "https://github.com/androidovshchik/cordova-detect-vpn#readme",
+  "homepage": "https://github.com/androidovshchik/cordova-device-info#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/androidovshchik/cordova-detect-vpn.git"
+    "url": "git+https://github.com/androidovshchik/cordova-device-info.git"
   },
   "bugs": {
-    "url": "https://github.com/androidovshchik/cordova-detect-vpn/issues"
+    "url": "https://github.com/androidovshchik/cordova-device-info/issues"
   },
   "keywords": [
     "cordova",
     "plugin",
     "android",
-    "detect",
-    "vpn"
+    "device",
+    "info"
   ]
 }
