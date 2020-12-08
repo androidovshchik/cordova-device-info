@@ -17,6 +17,7 @@
                 <param name="android-package" value="ru.androidovshchik.DeviceInfoPlugin" />
             </feature>
         </config-file>
+        <framework src="com.github.nisrulz:easydeviceinfo-base:2.4.1" />
         <source-file src="src/android/ru/androidovshchik/DeviceInfoPlugin.java"
             target-dir="src/ru/androidovshchik" />
     </platform>
