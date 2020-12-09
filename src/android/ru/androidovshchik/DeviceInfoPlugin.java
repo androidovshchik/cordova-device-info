@@ -93,11 +93,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     callbackContext.sendPluginResult(result);
                 } else {
                     callbackPhone = callbackContext;
-                    if (!requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE)) {
-                        result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                        callbackContext.sendPluginResult(result);
-                        callbackPhone = null;
-                    }
+                    requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE);
                 }
                 break;
             case "getZoneOffset":
@@ -117,7 +113,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
             case "observeScreenshots":
                 if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     if (observer == null) {
-
+                        observer = new ScreenshotObserver(context);
                     }
                     context.getContentResolver().registerContentObserver(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -126,11 +122,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     );
                 } else {
                     callbackStorage = callbackContext;
-                    if (!requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE)) {
-                        result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                        callbackContext.sendPluginResult(result);
-                        callbackStorage = null;
-                    }
+                    requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE);
                 }
                 break;
             default:
@@ -146,31 +138,46 @@ public class DeviceInfoPlugin extends CordovaPlugin {
         return pm.checkPermission(permission, packageName) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private boolean requestPermission(String permission, int requestCode) {
+    private void requestPermission(String permission, int requestCode) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Activity activity = cordova.getActivity();
-            if (activity == null || activity.shouldShowRequestPermissionRationale(permission)) {
-                return false;
+            if (activity != null) {
+                activity.requestPermissions(new String[]{permission}, requestCode);
             }
-            activity.requestPermissions(new String[]{permission}, requestCode);
         }
-        return true;
     }
 
     @Override
+    @TargetApi(Build.VERSION_CODES.M)
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case REQUEST_PHONE:
-                if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
-                    execute("retrieveIMEI", (JSONArray) null, callbackPhone);
+                if (callbackPhone != null) {
+                    if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
+                        execute("retrieveIMEI", (JSONArray) null, callbackPhone);
+                    } else {
+                        Activity activity = cordova.getActivity();
+                        if (activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+                            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                            callbackPhone.sendPluginResult(result);
+                        }
+                    }
+                    callbackPhone = null;
                 }
-                callbackPhone = null;
                 break;
             case REQUEST_STORAGE:
-                if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    execute("observeScreenshots", (JSONArray) null, callbackStorage);
+                if (callbackStorage != null) {
+                    if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        execute("retrieveIMEI", (JSONArray) null, callbackStorage);
+                    } else {
+                        Activity activity = cordova.getActivity();
+                        if (activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                            callbackStorage.sendPluginResult(result);
+                        }
+                    }
+                    callbackStorage = null;
                 }
-                callbackStorage = null;
         }
     }
 }

@@ -1,32 +1,25 @@
 package ru.androidovshchik;
 
+import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import java.lang.ref.WeakReference;
+
 public class ScreenshotObserver extends ContentObserver {
 
-    public ScreenshotObserver() {
+    private WeakReference<Context> reference;
+
+    public ScreenshotObserver(Context context) {
         super(null);
-    }
-
-    @Override
-    public boolean deliverSelfNotifications() {
-        Log.d(TAG, "deliverSelfNotifications");
-        return super.deliverSelfNotifications();
-    }
-
-    @Override
-    public void onChange(boolean selfChange) {
-        super.onChange(selfChange);
+        reference = new WeakReference(context);
     }
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
-        Log.d(TAG, "onChange " + uri.toString());
         if (uri.toString().matches(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/[0-9]+")) {
-
             Cursor cursor = null;
             try {
                 cursor = getContentResolver().query(uri, new String[]{
@@ -45,6 +38,5 @@ public class ScreenshotObserver extends ContentObserver {
                 }
             }
         }
-        super.onChange(selfChange, uri);
     }
 }
