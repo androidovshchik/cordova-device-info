@@ -30,6 +30,9 @@ public class DeviceInfoPlugin extends CordovaPlugin {
 
     private ScreenshotObserver observer;
 
+    private CallbackContext callbackPhone;
+    private CallbackContext callbackStorage;
+
     @Override
     @SuppressLint("HardwareIds")
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -88,9 +91,13 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     }
                     result = new PluginResult(PluginResult.Status.OK, imei);
                     callbackContext.sendPluginResult(result);
-                } else if (!requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE)) {
-                    result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                    callbackContext.sendPluginResult(result);
+                } else {
+                    callbackPhone = callbackContext;
+                    if (!requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE)) {
+                        result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                        callbackContext.sendPluginResult(result);
+                        callbackPhone = null;
+                    }
                 }
                 break;
             case "getZoneOffset":
@@ -115,11 +122,15 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     context.getContentResolver().registerContentObserver(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         true,
-
-                        );
-                } else if (!requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE)) {
-                    result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                    callbackContext.sendPluginResult(result);
+                        observer
+                    );
+                } else {
+                    callbackStorage = callbackContext;
+                    if (!requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE)) {
+                        result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                        callbackContext.sendPluginResult(result);
+                        callbackStorage = null;
+                    }
                 }
                 break;
             default:
@@ -135,28 +146,31 @@ public class DeviceInfoPlugin extends CordovaPlugin {
         return pm.checkPermission(permission, packageName) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private boolean requestPermission(final String permission, final int requestCode) {
+    private boolean requestPermission(String permission, int requestCode) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Activity activity = cordova.getActivity();
             if (activity == null || activity.shouldShowRequestPermissionRationale(permission)) {
                 return false;
             }
-            cordova.getThreadPool().execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    Activity activity = cordova.getActivity();
-                    if (activity != null) {
-                        activity.requestPermissions(new String[]{permission}, requestCode);
-                    }
-                }
-            });
+            activity.requestPermissions(new String[]{permission}, requestCode);
         }
         return true;
     }
 
     @Override
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
-
+        switch (requestCode) {
+            case REQUEST_PHONE:
+                if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
+                    execute("retrieveIMEI", (JSONArray) null, callbackPhone);
+                }
+                callbackPhone = null;
+                break;
+            case REQUEST_STORAGE:
+                if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    execute("observeScreenshots", (JSONArray) null, callbackStorage);
+                }
+                callbackStorage = null;
+        }
     }
 }
