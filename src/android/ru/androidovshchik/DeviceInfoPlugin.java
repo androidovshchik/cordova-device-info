@@ -36,7 +36,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
     @Override
     @SuppressLint("HardwareIds")
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
+    public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
         Context context = cordova.getContext();
         PluginResult result;
         switch (action) {
@@ -112,14 +112,22 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(result);
             case "observeScreenshots":
                 if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    if (observer == null) {
-                        observer = new ScreenshotObserver(context);
-                    }
-                    context.getContentResolver().registerContentObserver(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        true,
-                        observer
-                    );
+                    cordova.getThreadPool().execute(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            Context context = cordova.getContext();
+                            if (observer == null) {
+                                observer = new ScreenshotObserver(context);
+                            }
+                            observer.addCallback(callbackContext);
+                            context.getContentResolver().registerContentObserver(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                true,
+                                observer
+                            );
+                        }
+                    });
                 } else {
                     callbackStorage = callbackContext;
                     requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE);
@@ -157,10 +165,13 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         execute("retrieveIMEI", (JSONArray) null, callbackPhone);
                     } else {
                         Activity activity = cordova.getActivity();
-                        if (activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
-                            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                            callbackPhone.sendPluginResult(result);
+                        PluginResult result;
+                        if (activity != null && activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+                            result = new PluginResult(PluginResult.Status.ERROR, "User has denied permission request. Try again");
+                        } else {
+                            result = new PluginResult(PluginResult.Status.ERROR, "Launch app settings for manual providing of permission");
                         }
+                        callbackPhone.sendPluginResult(result);
                     }
                     callbackPhone = null;
                 }
@@ -171,13 +182,23 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         execute("retrieveIMEI", (JSONArray) null, callbackStorage);
                     } else {
                         Activity activity = cordova.getActivity();
-                        if (activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
-                            callbackStorage.sendPluginResult(result);
+                        PluginResult result;
+                        if (activity != null && activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                            result = new PluginResult(PluginResult.Status.ERROR, "User has denied permission request. Try again");
+                        } else {
+                            result = new PluginResult(PluginResult.Status.ERROR, "Launch app settings for manual providing of permission");
                         }
+                        callbackStorage.sendPluginResult(result);
                     }
                     callbackStorage = null;
                 }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        observer.release();
+        callbackPhone = null;
+        callbackStorage = null;
     }
 }

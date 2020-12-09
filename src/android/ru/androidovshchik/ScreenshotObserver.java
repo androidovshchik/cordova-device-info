@@ -6,19 +6,32 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import org.apache.cordova.CallbackContext;
+
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ScreenshotObserver extends ContentObserver {
 
     private WeakReference<Context> reference;
 
+    private Set<CallbackContext> callbacks = new HashSet<>();
+
     public ScreenshotObserver(Context context) {
         super(null);
-        reference = new WeakReference(context);
+        reference = new WeakReference<>(context);
+    }
+
+    public void addCallback(CallbackContext callback) {
+        callbacks.add(callback);
     }
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
+        if (uri != null) {
+
+        }
         if (uri.toString().matches(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/[0-9]+")) {
             Cursor cursor = null;
             try {
@@ -38,5 +51,9 @@ public class ScreenshotObserver extends ContentObserver {
                 }
             }
         }
+    }
+
+    public void release() {
+        callbacks.clear();
     }
 }
