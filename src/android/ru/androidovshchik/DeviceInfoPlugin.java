@@ -8,13 +8,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.LocaleList;
 import android.telephony.TelephonyManager;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -80,6 +80,11 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(result);
                 break;
             case "retrieveIMEI":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    result = new PluginResult(PluginResult.Status.ERROR, "Android Q has restricted to access for both IMEI and serial no");
+                    callbackContext.sendPluginResult(result);
+                    return true;
+                }
                 if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
                     TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                     String imei;
@@ -101,13 +106,14 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(result);
                 break;
             case "getLanguages":
-                String[] locales = Resources.getSystem().getAssets().getLocales();
-                try {
-                    result = new PluginResult(PluginResult.Status.OK, new JSONArray(locales));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    result = new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+                String output;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    LocaleList locales = Resources.getSystem().getConfiguration().getLocales();
+                    output = locales.toString();
+                } else {
+                    output = Resources.getSystem().getConfiguration().locale.toString();
                 }
+                result = new PluginResult(PluginResult.Status.OK, output);
                 callbackContext.sendPluginResult(result);
             case "observeScreenshots":
                 if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
