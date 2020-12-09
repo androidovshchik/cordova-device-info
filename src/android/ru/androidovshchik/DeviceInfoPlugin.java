@@ -1,9 +1,13 @@
 package ru.androidovshchik;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -19,6 +23,8 @@ import java.util.TimeZone;
 public class DeviceInfoPlugin extends CordovaPlugin {
 
     @Override
+    @SuppressWarnings("deprecation")
+    @SuppressLint({"MissingPermission", "HardwareIds"})
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
         Context context = cordova.getContext();
@@ -63,7 +69,34 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     result = new PluginResult(PluginResult.Status.ERROR, e.getMessage());
                 }
                 break;
-            case "getTimeZone":
+            case "retrieveIMEI":
+                String packageName = context.getPackageName();
+                PackageManager pm = context.getPackageManager();
+                if (pm.checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, packageName) == PackageManager.PERMISSION_GRANTED) {
+                    TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+                    String imei;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (tm.getPhoneCount() >= 2) {
+                                imei = tm.getImei(0);
+                            } else {
+                                imei = tm.getImei();
+                            }
+                        } else {
+                            if (tm.getPhoneCount() >= 2) {
+                                imei = tm.getDeviceId(0);
+                            } else {
+                                imei = tm.getDeviceId();
+                            }
+                        }
+                    } else {
+                        imei = tm.getDeviceId();
+                    }
+                    result = new PluginResult(PluginResult.Status.OK, imei);
+                }
+                result = new PluginResult(PluginResult.Status.OK, offset);
+                break;
+            case "getZoneOffset":
                 int offset = TimeZone.getDefault().getOffset(System.currentTimeMillis());
                 result = new PluginResult(PluginResult.Status.OK, offset);
                 break;
@@ -75,6 +108,8 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     e.printStackTrace();
                     result = new PluginResult(PluginResult.Status.JSON_EXCEPTION);
                 }
+            case "observeScreenshots":
+
                 break;
             default:
                 return false;
