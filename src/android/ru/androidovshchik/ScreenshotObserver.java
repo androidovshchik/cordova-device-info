@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.PluginResult;
 
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
@@ -45,12 +46,15 @@ public class ScreenshotObserver extends ContentObserver {
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
-        if (uri.toString().matches(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/[0-9]+")) {
-
+        String path = getImagePath(uri);
+        for (CallbackContext callback : callbacks) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, path);
+            result.setKeepCallback(true);
+            callback.sendPluginResult(result);
         }
     }
 
-    private String getScreenshotPath(Uri uri) {
+    private String getImagePath(Uri uri) {
         Context context = reference.get();
         if (context == null || uri == null) {
             return null;
