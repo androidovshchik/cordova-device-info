@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.provider.MediaStore;
 import android.telephony.TelephonyManager;
 
 import org.apache.cordova.CallbackContext;
@@ -23,7 +24,6 @@ import java.util.TimeZone;
 public class DeviceInfoPlugin extends CordovaPlugin {
 
     @Override
-    @SuppressWarnings("deprecation")
     @SuppressLint({"MissingPermission", "HardwareIds"})
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
@@ -68,6 +68,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     e.printStackTrace();
                     result = new PluginResult(PluginResult.Status.ERROR, e.getMessage());
                 }
+                callbackContext.sendPluginResult(result);
                 break;
             case "retrieveIMEI":
                 String packageName = context.getPackageName();
@@ -75,30 +76,27 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 if (pm.checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, packageName) == PackageManager.PERMISSION_GRANTED) {
                     TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                     String imei;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (tm.getPhoneCount() >= 2) {
-                                imei = tm.getImei(0);
-                            } else {
-                                imei = tm.getImei();
-                            }
-                        } else {
-                            if (tm.getPhoneCount() >= 2) {
-                                imei = tm.getDeviceId(0);
-                            } else {
-                                imei = tm.getDeviceId();
-                            }
-                        }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        imei = tm.getImei();
                     } else {
                         imei = tm.getDeviceId();
                     }
                     result = new PluginResult(PluginResult.Status.OK, imei);
+                } else {
+                    cordova.getThreadPool().execute(new Runnable() {
+
+                        @Override
+                        public void run() {
+
+                        }
+                    });
                 }
                 result = new PluginResult(PluginResult.Status.OK, offset);
                 break;
             case "getZoneOffset":
                 int offset = TimeZone.getDefault().getOffset(System.currentTimeMillis());
                 result = new PluginResult(PluginResult.Status.OK, offset);
+                callbackContext.sendPluginResult(result);
                 break;
             case "getLanguages":
                 String[] locales = Resources.getSystem().getAssets().getLocales();
@@ -108,13 +106,22 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     e.printStackTrace();
                     result = new PluginResult(PluginResult.Status.JSON_EXCEPTION);
                 }
+                callbackContext.sendPluginResult(result);
             case "observeScreenshots":
+                context.getContentResolver().registerContentObserver(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    true,
 
+                    );
                 break;
             default:
                 return false;
         }
-        callbackContext.sendPluginResult(result);
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
+        super.onRequestPermissionResult(requestCode, permissions, grantResults);
     }
 }
