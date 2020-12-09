@@ -14,9 +14,11 @@ import java.util.Set;
 
 public class ScreenshotObserver extends ContentObserver {
 
-    private WeakReference<Context> reference;
+    private final WeakReference<Context> reference;
 
-    private Set<CallbackContext> callbacks = new HashSet<>();
+    private final Set<CallbackContext> callbacks = new HashSet<>();
+
+    private boolean hasBeenRegistered = false;
 
     public ScreenshotObserver(Context context) {
         super(null);
@@ -27,33 +29,56 @@ public class ScreenshotObserver extends ContentObserver {
         callbacks.add(callback);
     }
 
-    @Override
-    public void onChange(boolean selfChange, Uri uri) {
-        if (uri != null) {
-
-        }
-        if (uri.toString().matches(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/[0-9]+")) {
-            Cursor cursor = null;
-            try {
-                cursor = getContentResolver().query(uri, new String[]{
-                    MediaStore.Images.Media.DISPLAY_NAME,
-                    MediaStore.Images.Media.DATA
-                }, null, null, null);
-                if (cursor != null && cursor.moveToFirst()) {
-                    final String fileName = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));
-                    final String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
-                    // TODO: apply filter on the file name to ensure it's screen shot event
-                    Log.d(TAG, "screen shot added " + fileName + " " + path);
-                }
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
+    public void registerIfNeeded() {
+        if (!hasBeenRegistered) {
+            Context context = reference.get();
+            if (context != null) {
+                context.getContentResolver().registerContentObserver(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    true,
+                    this
+                );
+                hasBeenRegistered = true;
             }
         }
     }
 
+    @Override
+    public void onChange(boolean selfChange, Uri uri) {
+        if (uri.toString().matches(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/[0-9]+")) {
+
+        }
+    }
+
+    private String getScreenshotPath(Uri uri) {
+        Context context = reference.get();
+        if (context == null || uri == null) {
+            return null;
+        }
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, new String[]{
+                MediaStore.Images.Media.DISPLAY_NAME,
+                MediaStore.Images.Media.DATA
+            }, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
     public void release() {
+        Context context = reference.get();
+        if (context != null) {
+            context.getContentResolver().unregisterContentObserver(this);
+        }
         callbacks.clear();
     }
 }

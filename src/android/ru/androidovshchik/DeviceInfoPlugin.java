@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
-import android.provider.MediaStore;
 import android.telephony.TelephonyManager;
 
 import org.apache.cordova.CallbackContext;
@@ -117,15 +116,13 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         @Override
                         public void run() {
                             Context context = cordova.getContext();
-                            if (observer == null) {
-                                observer = new ScreenshotObserver(context);
+                            if (context != null) {
+                                if (observer == null) {
+                                    observer = new ScreenshotObserver(context);
+                                }
+                                observer.addCallback(callbackContext);
+                                observer.registerIfNeeded();
                             }
-                            observer.addCallback(callbackContext);
-                            context.getContentResolver().registerContentObserver(
-                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                true,
-                                observer
-                            );
                         }
                     });
                 } else {
