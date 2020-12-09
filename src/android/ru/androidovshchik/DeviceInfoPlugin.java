@@ -3,6 +3,7 @@ package ru.androidovshchik;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -21,10 +22,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+@SuppressLint("MissingPermission")
 public class DeviceInfoPlugin extends CordovaPlugin {
 
+    private static final int REQUEST_PHONE = 1;
+    private static final int REQUEST_STORAGE = 2;
+
+    private ScreenshotObserver observer;
+
     @Override
-    @SuppressLint({"MissingPermission", "HardwareIds"})
+    @SuppressLint("HardwareIds")
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
         Context context = cordova.getContext();
@@ -71,9 +78,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(result);
                 break;
             case "retrieveIMEI":
-                String packageName = context.getPackageName();
-                PackageManager pm = context.getPackageManager();
-                if (pm.checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, packageName) == PackageManager.PERMISSION_GRANTED) {
+                if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
                     TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                     String imei;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -82,16 +87,11 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         imei = tm.getDeviceId();
                     }
                     result = new PluginResult(PluginResult.Status.OK, imei);
-                } else {
-                    cordova.getThreadPool().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-
-                        }
-                    });
+                    callbackContext.sendPluginResult(result);
+                } else if (!requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE)) {
+                    result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                    callbackContext.sendPluginResult(result);
                 }
-                result = new PluginResult(PluginResult.Status.OK, offset);
                 break;
             case "getZoneOffset":
                 int offset = TimeZone.getDefault().getOffset(System.currentTimeMillis());
@@ -108,11 +108,19 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 }
                 callbackContext.sendPluginResult(result);
             case "observeScreenshots":
-                context.getContentResolver().registerContentObserver(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    true,
+                if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    if (observer == null) {
 
-                    );
+                    }
+                    context.getContentResolver().registerContentObserver(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        true,
+
+                        );
+                } else if (!requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE)) {
+                    result = new PluginResult(PluginResult.Status.ERROR, "You should show UI with rationale");
+                    callbackContext.sendPluginResult(result);
+                }
                 break;
             default:
                 return false;
@@ -120,8 +128,35 @@ public class DeviceInfoPlugin extends CordovaPlugin {
         return true;
     }
 
+    private boolean checkPermission(String permission) {
+        Context context = cordova.getContext();
+        String packageName = context.getPackageName();
+        PackageManager pm = context.getPackageManager();
+        return pm.checkPermission(permission, packageName) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean requestPermission(final String permission, final int requestCode) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Activity activity = cordova.getActivity();
+            if (activity == null || activity.shouldShowRequestPermissionRationale(permission)) {
+                return false;
+            }
+            cordova.getThreadPool().execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    Activity activity = cordova.getActivity();
+                    if (activity != null) {
+                        activity.requestPermissions(new String[]{permission}, requestCode);
+                    }
+                }
+            });
+        }
+        return true;
+    }
+
     @Override
-    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
-        super.onRequestPermissionResult(requestCode, permissions, grantResults);
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
+
     }
 }

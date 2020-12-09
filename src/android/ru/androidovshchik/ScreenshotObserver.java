@@ -1,9 +1,15 @@
 package ru.androidovshchik;
 
 import android.database.ContentObserver;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.MediaStore;
 
 public class ScreenshotObserver extends ContentObserver {
+
+    public ScreenshotObserver() {
+        super(null);
+    }
 
     @Override
     public boolean deliverSelfNotifications() {
