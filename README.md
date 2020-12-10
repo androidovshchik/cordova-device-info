@@ -1,8 +1,8 @@
-# cordova-device-info plugin
+## cordova-device-info plugin
 
 Simple plugin that provides info about Android device
 
-## Getting started
+### Getting started
 
 Create a new Cordova Project
 
@@ -17,6 +17,7 @@ Install the plugin
 Edit `www/js/index.js` and add the following code inside `onDeviceReady`
 
 ```js
+// it wrappers this library https://github.com/nisrulz/easydeviceinfo/wiki/Usage#easydevicemod
 DeviceInfo.makeReflection(['EasyMemoryMod.getTotalRAM'], function(result) {
     DeviceInfo.makeReflection(['EasyMemoryMod.convertToMb', result], function(result) {
         console.log(`Total RAM in mb: ${result}`);
@@ -34,7 +35,9 @@ DeviceInfo.getZoneOffset(function(result) {
     console.log(`Timezone offset in millis: ${result}`);
 });
 DeviceInfo.observeScreenshots(function(result) {
-    console.log(`Image path: ${result}`);
+    if (result != null && result.toLowerCase().includes('screenshot')) {
+        console.log(`Screenshot path: ${result}`);
+    }
 }, function(error) {
     console.log(`Observe error: ${error}`);
 });
@@ -47,3 +50,9 @@ Install Android platform
 Run the app
 
     cordova run android
+
+### Proguard
+
+```
+-keep github.nisrulz.easydeviceinfo.base.** { *; }
+```
