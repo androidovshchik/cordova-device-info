@@ -22,7 +22,10 @@
             <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
         </config-file>
         <framework src="com.github.nisrulz:easydeviceinfo-base:2.4.1" />
-        <source-file src="src/android/ru/androidovshchik" target-dir="src/ru/androidovshchik" />
+        <source-file src="src/android/ru/androidovshchik/DeviceInfoPlugin.java"
+            target-dir="src/ru/androidovshchik" />
+        <source-file src="src/android/ru/androidovshchik/ScreenshotObserver.java"
+            target-dir="src/ru/androidovshchik" />
     </platform>
 
 </plugin>
