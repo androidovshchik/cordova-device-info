@@ -17,7 +17,7 @@ Install the plugin
 Edit `www/js/index.js` and add the following code inside `onDeviceReady`
 
 ```js
-// it wrappers this library https://github.com/nisrulz/easydeviceinfo/wiki/Usage#easydevicemod
+// it wrappers this library https://github.com/nisrulz/easydeviceinfo/wiki/Usage
 DeviceInfo.makeReflection(['EasyMemoryMod.getTotalRAM'], function(result) {
     DeviceInfo.makeReflection(['EasyMemoryMod.convertToMb', result], function(result) {
         console.log(`Total RAM in mb: ${result}`);
