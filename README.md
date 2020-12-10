@@ -19,7 +19,7 @@ Edit `www/js/index.js` and add the following code inside `onDeviceReady`
 ```js
 DeviceInfo.makeReflection(['EasyMemoryMod.getTotalRAM'], function(result) {
     DeviceInfo.makeReflection(['EasyMemoryMod.convertToMb', result], function(result) {
-        console.log(`Total RAM: ${result}`);
+        console.log(`Total RAM in mb: ${result}`);
     });
 });
 DeviceInfo.retrieveIMEI(function(result) {
@@ -35,6 +35,8 @@ DeviceInfo.getZoneOffset(function(result) {
 });
 DeviceInfo.observeScreenshots(function(result) {
     console.log(`Image path: ${result}`);
+}, function(error) {
+    console.log(`Observe error: ${error}`);
 });
 ```
 

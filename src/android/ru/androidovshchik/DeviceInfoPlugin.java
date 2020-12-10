@@ -115,7 +115,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     result = new PluginResult(PluginResult.Status.OK, imei);
                 } else {
                     cordova.requestPermission(this, 100, Manifest.permission.READ_PHONE_STATE);
-                    result = new PluginResult(PluginResult.Status.NO_RESULT);
+                    result = new PluginResult(PluginResult.Status.ERROR, "Required permission wasn't granted");
                 }
                 callbackContext.sendPluginResult(result);
                 break;
@@ -125,14 +125,16 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(result);
                 break;
             case "getLanguages":
-                String output;
+                JSONArray array = new JSONArray();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     LocaleList locales = Resources.getSystem().getConfiguration().getLocales();
-                    output = locales.toString();
+                    for (int i = 0; i < locales.size(); i++) {
+                        array.put(locales.get(i).toString());
+                    }
                 } else {
-                    output = Resources.getSystem().getConfiguration().locale.toString();
+                    array.put(Resources.getSystem().getConfiguration().locale.toString());
                 }
-                result = new PluginResult(PluginResult.Status.OK, output);
+                result = new PluginResult(PluginResult.Status.OK, array);
                 callbackContext.sendPluginResult(result);
             case "observeScreenshots":
                 if (cordova.hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
@@ -152,7 +154,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     });
                 } else {
                     cordova.requestPermission(this, 200, Manifest.permission.READ_EXTERNAL_STORAGE);
-                    result = new PluginResult(PluginResult.Status.NO_RESULT);
+                    result = new PluginResult(PluginResult.Status.ERROR, "Required permission wasn't granted");
                     callbackContext.sendPluginResult(result);
                 }
                 break;
