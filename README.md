@@ -17,9 +17,24 @@ Install the plugin
 Edit `www/js/index.js` and add the following code inside `onDeviceReady`
 
 ```js
-DeviceInfo.(function(result) {
-    if (result) {
-    }
+DeviceInfo.makeReflection(['EasyMemoryMod.getTotalRAM'], function(result) {
+    DeviceInfo.makeReflection(['EasyMemoryMod.convertToMb', result], function(result) {
+        console.log(`Total RAM: ${result}`);
+    });
+});
+DeviceInfo.retrieveIMEI(function(result) {
+    console.log(`IMEI: ${result}`);
+}, function(error) {
+    console.log(`IMEI error: ${error}`);
+});
+DeviceInfo.getLanguages(function(result) {
+    console.log(`Languages: ${result}`);
+});
+DeviceInfo.getZoneOffset(function(result) {
+    console.log(`Timezone offset in millis: ${result}`);
+});
+DeviceInfo.observeScreenshots(function(result) {
+    console.log(`Image path: ${result}`);
 });
 ```
 

@@ -3,9 +3,7 @@ package ru.androidovshchik;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.LocaleList;
@@ -24,13 +22,7 @@ import java.util.TimeZone;
 @SuppressLint("MissingPermission")
 public class DeviceInfoPlugin extends CordovaPlugin {
 
-    private static final int REQUEST_PHONE = 1;
-    private static final int REQUEST_STORAGE = 2;
-
     private ScreenshotObserver observer;
-
-    private CallbackContext callbackPhone;
-    private CallbackContext callbackStorage;
 
     @Override
     @SuppressLint("HardwareIds")
@@ -112,7 +104,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     callbackContext.sendPluginResult(result);
                     return true;
                 }
-                if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
+                if (cordova.hasPermission(Manifest.permission.READ_PHONE_STATE)) {
                     TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                     String imei;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -121,11 +113,11 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         imei = tm.getDeviceId();
                     }
                     result = new PluginResult(PluginResult.Status.OK, imei);
-                    callbackContext.sendPluginResult(result);
                 } else {
-                    callbackPhone = callbackContext;
-                    requestPermission(Manifest.permission.READ_PHONE_STATE, REQUEST_PHONE);
+                    cordova.requestPermission(this, 100, Manifest.permission.READ_PHONE_STATE);
+                    result = new PluginResult(PluginResult.Status.NO_RESULT);
                 }
+                callbackContext.sendPluginResult(result);
                 break;
             case "getZoneOffset":
                 int offset = TimeZone.getDefault().getOffset(System.currentTimeMillis());
@@ -143,7 +135,7 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                 result = new PluginResult(PluginResult.Status.OK, output);
                 callbackContext.sendPluginResult(result);
             case "observeScreenshots":
-                if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                if (cordova.hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     cordova.getThreadPool().execute(new Runnable() {
 
                         @Override
@@ -159,8 +151,9 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         }
                     });
                 } else {
-                    callbackStorage = callbackContext;
-                    requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_STORAGE);
+                    cordova.requestPermission(this, 200, Manifest.permission.READ_EXTERNAL_STORAGE);
+                    result = new PluginResult(PluginResult.Status.NO_RESULT);
+                    callbackContext.sendPluginResult(result);
                 }
                 break;
             default:
@@ -169,66 +162,8 @@ public class DeviceInfoPlugin extends CordovaPlugin {
         return true;
     }
 
-    private boolean checkPermission(String permission) {
-        Context context = cordova.getContext();
-        String packageName = context.getPackageName();
-        PackageManager pm = context.getPackageManager();
-        return pm.checkPermission(permission, packageName) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestPermission(String permission, int requestCode) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Activity activity = cordova.getActivity();
-            if (activity != null) {
-                activity.requestPermissions(new String[]{permission}, requestCode);
-            }
-        }
-    }
-
-    @Override
-    @TargetApi(Build.VERSION_CODES.M)
-    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_PHONE:
-                if (callbackPhone != null) {
-                    if (checkPermission(Manifest.permission.READ_PHONE_STATE)) {
-                        execute("retrieveIMEI", (JSONArray) null, callbackPhone);
-                    } else {
-                        Activity activity = cordova.getActivity();
-                        PluginResult result;
-                        if (activity != null && activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
-                            result = new PluginResult(PluginResult.Status.ERROR, "User has denied permission request. Try again");
-                        } else {
-                            result = new PluginResult(PluginResult.Status.ERROR, "Launch app settings for manual providing of permission");
-                        }
-                        callbackPhone.sendPluginResult(result);
-                    }
-                    callbackPhone = null;
-                }
-                break;
-            case REQUEST_STORAGE:
-                if (callbackStorage != null) {
-                    if (checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        execute("retrieveIMEI", (JSONArray) null, callbackStorage);
-                    } else {
-                        Activity activity = cordova.getActivity();
-                        PluginResult result;
-                        if (activity != null && activity.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                            result = new PluginResult(PluginResult.Status.ERROR, "User has denied permission request. Try again");
-                        } else {
-                            result = new PluginResult(PluginResult.Status.ERROR, "Launch app settings for manual providing of permission");
-                        }
-                        callbackStorage.sendPluginResult(result);
-                    }
-                    callbackStorage = null;
-                }
-        }
-    }
-
     @Override
     public void onDestroy() {
         observer.release();
-        callbackPhone = null;
-        callbackStorage = null;
     }
 }
