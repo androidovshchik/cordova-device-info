@@ -42,14 +42,41 @@ public class DeviceInfoPlugin extends CordovaPlugin {
             case "callReflection":
                 try {
                     String[] names = data.getString(0).split("\\.");
-                    Class<?> cls = Class.forName(names[0]);
+                    @SuppressWarnings("SpellCheckingInspection")
+                    Class<?> cls = Class.forName("github.nisrulz.easydeviceinfo.base." + names[0]);
                     Object instance;
                     if (names[0].equals("EasyCpuMod")) {
                         instance = cls.newInstance();
                     } else {
                         instance = cls.getConstructor(Context.class).newInstance(context);
                     }
-                    Object output = cls.getMethod(names[1]).invoke(instance);
+                    Object[] params = null;
+                    Class<?>[] classes = null;
+                    if (data.length() > 1) {
+                        params = new Object[data.length() - 1];
+                        classes = new Class<?>[data.length() - 1];
+                        for (int i = 0; i < data.length() - 1; i++) {
+                            Object value = data.get(i + 1);
+                            params[i] = value;
+                            if (value != null) {
+                                Class<?> type = value.getClass();
+                                if (type.equals(Integer.class)) {
+                                    classes[i] = int.class;
+                                } else if (type.equals(Long.class)) {
+                                    classes[i] = long.class;
+                                } else if (type.equals(Float.class)) {
+                                    classes[i] = float.class;
+                                } else if (type.equals(Boolean.class)) {
+                                    classes[i] = boolean.class;
+                                } else {
+                                    classes[i] = type;
+                                }
+                            } else {
+                                throw new IllegalArgumentException("Null arguments are not supported");
+                            }
+                        }
+                    }
+                    Object output = cls.getMethod(names[1], classes).invoke(instance, params);
                     if (output instanceof Integer) {
                         result = new PluginResult(PluginResult.Status.OK, (int) output);
                     } else if (output instanceof Long) {
