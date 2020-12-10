@@ -114,7 +114,6 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                     }
                     result = new PluginResult(PluginResult.Status.OK, imei);
                 } else {
-                    cordova.requestPermission(this, 100, Manifest.permission.READ_PHONE_STATE);
                     result = new PluginResult(PluginResult.Status.ERROR, "Required permission wasn't granted");
                 }
                 callbackContext.sendPluginResult(result);
@@ -153,7 +152,6 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                         }
                     });
                 } else {
-                    cordova.requestPermission(this, 200, Manifest.permission.READ_EXTERNAL_STORAGE);
                     result = new PluginResult(PluginResult.Status.ERROR, "Required permission wasn't granted");
                     callbackContext.sendPluginResult(result);
                 }

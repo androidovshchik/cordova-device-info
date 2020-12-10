@@ -27,6 +27,7 @@ DeviceInfo.retrieveIMEI(function(result) {
     console.log(`IMEI: ${result}`);
 }, function(error) {
     console.log(`IMEI error: ${error}`);
+    // todo request permission READ_PHONE_STATE
 });
 DeviceInfo.getLanguages(function(result) {
     console.log(`Languages: ${result}`);
@@ -40,6 +41,7 @@ DeviceInfo.observeScreenshots(function(result) {
     }
 }, function(error) {
     console.log(`Observe error: ${error}`);
+    // todo request permission READ_EXTERNAL_STORAGE
 });
 ```
 
