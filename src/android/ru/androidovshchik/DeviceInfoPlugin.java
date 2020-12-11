@@ -3,6 +3,7 @@ package ru.androidovshchik;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
@@ -68,7 +69,12 @@ public class DeviceInfoPlugin extends CordovaPlugin {
                             }
                         }
                     }
-                    Object output = cls.getMethod(names[1], classes).invoke(instance, params);
+                    Object output;
+                    if (data.getString(0).equals("EasyDeviceMod.getDeviceType")) {
+                        output = cls.getMethod(names[1], Activity.class).invoke(instance, cordova.getActivity());
+                    } else {
+                        output = cls.getMethod(names[1], classes).invoke(instance, params);
+                    }
                     if (output instanceof Integer) {
                         result = new PluginResult(PluginResult.Status.OK, (int) output);
                     } else if (output instanceof Long) {
